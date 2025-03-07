@@ -1,24 +1,183 @@
-import React, { useEffect } from "react";
-import Layout from "./Components/Layout";
-import Login from "./Pages/Login";
-import { Outlet, useNavigate } from "react-router-dom";
+import axios from "axios";
+import React, { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { CiNoWaitingSign } from "react-icons/ci";
+import { GiKnightBanner } from "react-icons/gi";
+import { IoMdAddCircle } from "react-icons/io";
+import { RxExit } from "react-icons/rx";
+import { useNavigate } from "react-router-dom";
+import Modal from "./Modal";
+import { BiSolidLogInCircle } from "react-icons/bi";
 
 function App() {
-  const token = localStorage.getItem("accessToken");
+  const [openmodal, setOpenmodal] = useState();
   const navigate = useNavigate();
+  const { register, setValue, watch, handleSubmit } = useForm();
+  const [banner, setBanner] = useState([]);
+  const baseUrl = "https://api.fruteacorp.uz";
+  const token = localStorage.getItem("token");
+
+  const modal = () => {
+    setOpenmodal(!openmodal);
+  };
 
   useEffect(() => {
-    if (!token) {
-      navigate("/login");
-    }
-  }, [token]);
+    getBanner();
+  }, []);
 
-  return token ? (
-    <Layout>
-      <Outlet />
-    </Layout>
-  ) : (
-    <Login />
+  const getBanner = () => {
+    axios
+      .get(`${baseUrl}/banner`)
+      .then((res) => {
+        setBanner(res.data.data);
+      })
+      .catch((err) => console.error("Error fetching banners:", err));
+  };
+
+  const logOut = () => {
+    localStorage.removeItem("token");
+    navigate("/");
+  };
+
+  const handleFile = (e) => {
+    const file = e.target.files[0]; // files to‘g‘ri ishlatildi
+    setValue("image", file);
+  };
+
+  const onSubmit = (data) => {
+    const formData = new FormData();
+    formData.append("title", data.title);
+    formData.append("link", data.link);
+    formData.append("image", data.image);
+    axios({
+      method: "POST",
+      url: `${baseUrl}/banner`,
+      data: formData,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        console.log("okey");
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+  return (
+    <>
+      {openmodal ? (
+        <Modal>
+          <div className="bg-white flex flex-col gap-5 p-5 rounded-2xl">
+            <h1 className="text-center font-medium text-blue-500 text-2xl">
+              Malumot qo'shish
+            </h1>
+            <form action="" className="flex flex-col gap-3">
+              <label>
+                <p className="font-mono text-gray-600">Text</p>
+                <input
+                  {...register("title")}
+                  autocomplate="current-text"
+                  type="text"
+                  placeholder="Title"
+                  className="border border-gray-400 rounded-sm hover:scale-98 focus:scale-103 duration-300 outline-none w-70 p-2"
+                />
+              </label>
+              <label>
+                <p className="font-mono text-gray-600">Link</p>
+                <input
+                  {...register("link")}
+                  autocomplate="current-password"
+                  type="text"
+                  placeholder="Link"
+                  className="border border-gray-400 rounded-sm hover:scale-98 focus:scale-103 duration-300 outline-none w-70 p-2"
+                />
+              </label>
+
+              <input type="file" onChange={handleFile} />
+            </form>
+            <div className="flex justify-between">
+              <button
+                onClick={handleSubmit(onSubmit)}
+                className="bg-blue-500 flex items-center gap-2 hover:scale-103 active:scale-90 duration-100 px-3 py-1 cursor-pointer rounded-sm text-white font-bold"
+              >
+                Kiritish
+                <BiSolidLogInCircle />
+              </button>
+              <button
+                onClick={modal}
+                className="text-blue-600 hover:scale-103 active:scale-90 duration-100 cursor-pointer"
+              >
+                Bekor qilish
+              </button>
+            </div>
+          </div>
+        </Modal>
+      ) : (
+        ""
+      )}
+      <div className="bg-white w-full">
+        <div className="container">
+          <div className="Header fixed w-[86vw] bg-white py-5 flex items-center justify-between">
+            <div className="text-5xl font-medium flex items-center text-[#00a36f]">
+              <h1>Banner</h1>
+              <GiKnightBanner />
+            </div>
+            <button
+              onClick={modal}
+              className="flex hover:scale-103 active:scale-90 duration-100 items-center px-3 py-1 font-medium border-2 text-[#00a36f] gap-1 border-[#00a36f] rounded-sm"
+            >
+              Malumot qo'shish
+              <IoMdAddCircle />
+            </button>
+            <button
+              onClick={logOut}
+              className="text-[#abbb01] hover:scale-103 active:scale-90 duration-100 flex items-center gap-1 font-bold"
+            >
+              Chiqish
+              <RxExit />
+            </button>
+          </div>
+
+          {/* Banners List */}
+          <div className="Banner pt-23 grid grid-cols-3 gap-5">
+            {banner.length > 0 ? (
+              banner.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-white overflow-hidden shadow-[3px_7px_12px_#00000050] rounded-lg p-2"
+                >
+                  <img
+                    src={`${baseUrl}/images/${item.image}`}
+                    alt={item.title}
+                    className="w-full h-50 object-cover rounded-md"
+                  />
+                  <div className="flex justify-between">
+                    <h2 className="text-xl font-semibold overflow-hidden">
+                      {item.title}
+                    </h2>
+                    <div className="flex items-center gap-4">
+                      <button className="text-sm bg-blue-600 rounded-sm px-2 w-19 text-white hover:scale-103 active:scale-90 duration-100 font-semibold">
+                        Taxrirlash
+                      </button>
+                      <button className="text-sm bg-red-600 rounded-sm px-2 w-19 text-white hover:scale-103 active:scale-90 duration-100 font-semibold">
+                        O'chirish
+                      </button>
+                    </div>
+                  </div>
+                  <p className="max-h-5">{item.link}</p>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-gray-500 flex flex-col items-center">
+                <CiNoWaitingSign className="text-9xl" />
+                <h2 className="">Bu yerda malumot mavjud emas</h2>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
