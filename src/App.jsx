@@ -8,11 +8,15 @@ import { RxExit } from "react-icons/rx";
 import { useNavigate } from "react-router-dom";
 import Modal from "./Modal";
 import { BiSolidLogInCircle } from "react-icons/bi";
+import { toast } from "react-toastify";
 
 function App() {
-  const [openmodal, setOpenmodal] = useState();
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [openmodal, setOpenmodal] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [bannerToDelete, setBannerToDelete] = useState(null);
   const navigate = useNavigate();
-  const { register, setValue, watch, handleSubmit } = useForm();
+  const { register, setValue, reset, handleSubmit } = useForm();
   const [banner, setBanner] = useState([]);
   const baseUrl = "https://api.fruteacorp.uz";
   const token = localStorage.getItem("token");
@@ -40,7 +44,7 @@ function App() {
   };
 
   const handleFile = (e) => {
-    const file = e.target.files[0]; // files to‘g‘ri ishlatildi
+    const file = e.target.files[0];
     setValue("image", file);
   };
 
@@ -49,28 +53,104 @@ function App() {
     formData.append("title", data.title);
     formData.append("link", data.link);
     formData.append("image", data.image);
+
+    const url = selectedItem
+      ? `${baseUrl}/banner/${selectedItem.id}`
+      : `${baseUrl}/banner`;
+    const method = selectedItem ? "PATCH" : "POST";
+
     axios({
-      method: "POST",
-      url: `${baseUrl}/banner`,
+      url: url,
+      method: method,
       data: formData,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    })
+      .then((res) => {
+        toast.success(
+          selectedItem
+            ? "Muvaffaqiyatli tahrirlandi"
+            : "Muvaffaqiyatli qo'shildi"
+        );
+        getBanner();
+        setOpenmodal(false);
+        reset();
+        setSelectedItem(null);
+      })
+      .catch((err) => {
+        console.error("Error:", err.response ? err.response.data : err.message);
+        toast.error("Xatolik yuz berdi");
+      });
+  };
+
+  const showBanner = (banner) => {
+    setValue("title", banner.title);
+    setValue("link", banner.link);
+    setSelectedItem(banner);
+    setOpenmodal(true);
+  };
+
+  const deleteBanner = (id) => {
+    axios({
+      url: `${baseUrl}/banner/${id}`,
+      method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
       .then((res) => {
-        console.log("okey");
+        toast.success("Muvaffaqiyatli o'chirildi");
+        getBanner();
       })
       .catch((err) => {
-        console.log(err);
+        console.error("Error deleting banner:", err);
+        toast.error("Xatolik yuz berdi");
       });
   };
+
+  const handleDeleteClick = (banner) => {
+    setBannerToDelete(banner);
+    setDeleteModal(true);
+  };
+
+  const DeleteModal = ({ onConfirm, onCancel }) => {
+    return (
+      <Modal>
+        <div className="bg-white flex flex-col gap-5 p-5 rounded-2xl">
+          <h1 className="text-center font-medium text-red-500 text-2xl">
+            O'chirishni tasdiqlang
+          </h1>
+          <p className="text-center text-gray-600">
+            Haqiqatdan ham bu bannerni o'chirmoqchimisiz?
+          </p>
+          <div className="flex justify-between">
+            <button
+              onClick={onConfirm}
+              className="bg-red-500 hover:scale-103 active:scale-90 duration-100 px-3 py-1 cursor-pointer rounded-sm text-white font-bold"
+            >
+              Ha, o'chirish
+            </button>
+            <button
+              onClick={onCancel}
+              className="bg-gray-500 hover:scale-103 active:scale-90 duration-100 px-3 py-1 cursor-pointer rounded-sm text-white font-bold"
+            >
+              Bekor qilish
+            </button>
+          </div>
+        </div>
+      </Modal>
+    );
+  };
+
   return (
     <>
-      {openmodal ? (
+      {openmodal && (
         <Modal>
           <div className="bg-white flex flex-col gap-5 p-5 rounded-2xl">
             <h1 className="text-center font-medium text-blue-500 text-2xl">
-              Malumot qo'shish
+              {selectedItem ? "Bannerni tahrirlash" : "Malumot qo'shish"}
             </h1>
             <form action="" className="flex flex-col gap-3">
               <label>
@@ -113,9 +193,18 @@ function App() {
             </div>
           </div>
         </Modal>
-      ) : (
-        ""
       )}
+
+      {deleteModal && (
+        <DeleteModal
+          onConfirm={() => {
+            deleteBanner(bannerToDelete.id);
+            setDeleteModal(false);
+          }}
+          onCancel={() => setDeleteModal(false)}
+        />
+      )}
+
       <div className="bg-white w-full">
         <div className="container">
           <div className="Header fixed w-[86vw] bg-white py-5 flex items-center justify-between">
@@ -157,10 +246,16 @@ function App() {
                       {item.title}
                     </h2>
                     <div className="flex items-center gap-4">
-                      <button className="text-sm bg-blue-600 rounded-sm px-2 w-19 text-white hover:scale-103 active:scale-90 duration-100 font-semibold">
+                      <button
+                        onClick={() => showBanner(item)}
+                        className="text-sm bg-blue-600 rounded-sm px-2 w-19 text-white hover:scale-103 active:scale-90 duration-100 font-semibold"
+                      >
                         Taxrirlash
                       </button>
-                      <button className="text-sm bg-red-600 rounded-sm px-2 w-19 text-white hover:scale-103 active:scale-90 duration-100 font-semibold">
+                      <button
+                        onClick={() => handleDeleteClick(item)}
+                        className="text-sm bg-red-600 rounded-sm px-2 w-19 text-white hover:scale-103 active:scale-90 duration-100 font-semibold"
+                      >
                         O'chirish
                       </button>
                     </div>

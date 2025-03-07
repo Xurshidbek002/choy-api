@@ -4,6 +4,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { BiSolidLogInCircle } from "react-icons/bi";
+import { toast } from "react-toastify";
 
 function Login() {
   const { register, handleSubmit } = useForm();
@@ -17,7 +18,7 @@ function Login() {
       data: data,
     })
       .then((res) => {
-        console.log(res);
+        toast.success("Login success")
         localStorage.setItem("token", res?.data?.data?.accessToken?.token);
         navigate("/dashboard");
       })
