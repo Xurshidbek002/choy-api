@@ -9,6 +9,8 @@ import { useNavigate } from "react-router-dom";
 import Modal from "./Modal";
 import { BiSolidLogInCircle } from "react-icons/bi";
 import { toast } from "react-toastify";
+import { MdDeleteOutline } from "react-icons/md";
+import { IoCloseSharp } from "react-icons/io5";
 
 function App() {
   const [selectedItem, setSelectedItem] = useState(null);
@@ -123,20 +125,22 @@ function App() {
             O'chirishni tasdiqlang
           </h1>
           <p className="text-center text-gray-600">
-            Haqiqatdan ham bu bannerni o'chirmoqchimisiz?
+            Haqiqatdan o'chirmoqchimisiz?
           </p>
           <div className="flex justify-between">
             <button
               onClick={onConfirm}
-              className="bg-red-500 hover:scale-103 active:scale-90 duration-100 px-3 py-1 cursor-pointer rounded-sm text-white font-bold"
+              className="bg-red-500 flex items-center gap-1 hover:scale-103 active:scale-90 duration-100 px-3 py-1 cursor-pointer rounded-sm text-white font-bold"
             >
-              Ha, o'chirish
+              O'chirish
+              <MdDeleteOutline />
             </button>
             <button
               onClick={onCancel}
-              className="bg-gray-500 hover:scale-103 active:scale-90 duration-100 px-3 py-1 cursor-pointer rounded-sm text-white font-bold"
+              className="bg-gray-500 flex items-center gap-1 hover:scale-103 active:scale-90 duration-100 px-3 py-1 cursor-pointer rounded-sm text-white font-bold"
             >
-              Bekor qilish
+              Yopish
+              <IoCloseSharp />
             </button>
           </div>
         </div>
